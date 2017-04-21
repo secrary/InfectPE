@@ -9,6 +9,8 @@ InjectPE works only with 32-bit executable files.
 * Learn how PE injection works.
 * ...and so on.
 
+In the project, there is hardcoded x-code of MessageBoxA, you can change it.
+
 ## Download
 [Windows x86 binary](https://github.com/secrary/InfectPE/releases)
 ## Dependencies: 
