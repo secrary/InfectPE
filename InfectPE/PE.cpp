@@ -160,7 +160,6 @@ namespace PE
 
 			for (DWORD j = 0; j < size_zeros; ++j)
 			{
-				auto ind = Parsed_PE.get()->ish.get()[good_sections_r_sz[i]].Misc.VirtualSize + j;
 				if (section[Parsed_PE.get()->ish.get()[good_sections_r_sz[i]].Misc.VirtualSize + j] != 0x0)
 				{
 					ready_sections_r_sz.erase(ready_sections_r_sz.begin() + i);
@@ -331,7 +330,7 @@ namespace PE
 			{
 				if (section[Parsed_PE.get()->ish.get()[code_section].Misc.VirtualSize + j] != 0x0)
 				{
-					std::cout << "I can not inject code into code section :/\n";
+					std::cout << "Sorry, there is no enough space in code section :/\n";
 					exit(1);
 				}
 			}
