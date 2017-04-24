@@ -430,7 +430,6 @@ namespace PE
 
 	void Inject_Resize_Code(char* pe_file, size_t size_of_pe, char xcode[], size_t size_of_xcode, const std::string& out_path)
 	{
-		auto is_valid = true;
 		auto Parsed_PE = ParsePE(pe_file);
 
 		if (Parsed_PE.get()->ids.e_magic != IMAGE_DOS_SIGNATURE)
