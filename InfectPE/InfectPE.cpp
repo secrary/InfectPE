@@ -14,8 +14,9 @@ int main(int argc, char *argv[])
 	{
 		std::cout << "Usage: " << argv[0] << " <path_exe> <patched_path_exe> mode\n\
 		Example:\n\
-		.\Inj_cpp.exe .\input.exe .\out.exe code - Inject code into code section\n\
-		.\Inj_cpp.exe .\input.exe .\out.exe largest - Inject code into the largest section\n\
+		.\InjectPE.exe .\input.exe .\out.exe code - Inject x-code into code section\n\
+		.\InjectPE.exe .\input.exe .\out.exe largest - Inject x-code into the largest section\n\
+		.\InjectPE.exe .\input.exe .out.exe resize - resize code section and inject into the section\n\
 		";
 		return EXIT_FAILURE;
 	}
@@ -52,6 +53,8 @@ int main(int argc, char *argv[])
 		PE::Inject_into_Largest_Tail(PE_file, size_of_pe, xcode, sizeof xcode, outfile);
 	else if (mode == "code")
 		PE::Inject_into_code_tail(PE_file, size_of_pe, xcode, sizeof xcode, outfile); // less suspicious
+	else if (mode == "resize")
+		PE::Inject_Resize_Code(PE_file, size_of_pe, xcode, sizeof xcode, outfile);
 	else
 	{
 		std::cout << "Incorrect mode\n";

