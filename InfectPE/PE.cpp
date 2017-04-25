@@ -9,6 +9,13 @@
 #include <sstream>
 using namespace std;
 
+constexpr std::size_t
+align_up(std::size_t value, std::size_t alignment) noexcept
+{
+	return (value + alignment - 1) & ~(alignment - 1);
+}
+
+
 namespace PE
 {
 	void PE_FILE::set_sizes(size_t size_ids_, size_t size_dos_stub_, size_t size_inh32_, size_t size_ish_, size_t size_sections_)
@@ -464,7 +471,7 @@ namespace PE
 		auto inj_size = sizeof push + sizeof esp + sizeof hex_oep + size_of_xcode - 4;
 
 		auto Last_of_Original_Raw_Address = Parsed_PE.get()->ish.get()[code_section].SizeOfRawData;
-		auto aligned_size_of_xcode = Parsed_PE.get()->inh32.OptionalHeader.FileAlignment * (inj_size / Parsed_PE.get()->inh32.OptionalHeader.FileAlignment) + Parsed_PE.get()->inh32.OptionalHeader.FileAlignment;
+		auto aligned_size_of_xcode = align_up(inj_size, Parsed_PE.get()->inh32.OptionalHeader.FileAlignment);
 		Parsed_PE.get()->ish.get()[code_section].SizeOfRawData += aligned_size_of_xcode; // resize size of code section
 
 
@@ -503,8 +510,11 @@ namespace PE
 		Parsed_PE.get()->inh32.OptionalHeader.DataDirectory[4].Size = { 0 };
 
 		// If v_sz != 0 and v_sz < r_sz, increase v_sz by sizeof(xcode).
-		if (Parsed_PE.get()->ish.get()[code_section].SizeOfRawData > Parsed_PE.get()->ish.get()[code_section].Misc.VirtualSize && Parsed_PE.get()->ish.get()[code_section].Misc.VirtualSize != 0)
+		if (Parsed_PE.get()->ish.get()[code_section].SizeOfRawData > Parsed_PE.get()->ish.get()[code_section].Misc.VirtualSize && Parsed_PE.get()->ish.get()[code_section].Misc.VirtualSize != 0) {
 			Parsed_PE.get()->ish.get()[code_section].Misc.VirtualSize += inj_size + 0x17;  // just enough
+			auto last_section = Parsed_PE.get()->inh32.FileHeader.NumberOfSections - 1;
+			Parsed_PE.get()->inh32.OptionalHeader.SizeOfImage = Parsed_PE.get()->ish.get()[last_section].VirtualAddress + align_up((Parsed_PE.get()->ish.get()[last_section].Misc.VirtualSize) ? Parsed_PE.get()->ish.get()[last_section].Misc.VirtualSize : Parsed_PE.get()->ish.get()[last_section].SizeOfRawData, Parsed_PE.get()->inh32.OptionalHeader.SectionAlignment);
+		}
 
 		auto size_of_changed_pe = size_of_pe + aligned_size_of_xcode;
 
