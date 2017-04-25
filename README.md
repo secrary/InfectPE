@@ -1,4 +1,4 @@
-# InfectPE
+![InfectPE](https://cloud.githubusercontent.com/assets/16405698/25353873/cf8d1058-2941-11e7-806a-b8f41f4f906e.png)
 
 Using this tool you can inject x-code/shellcode into PE file.
 InjectPE works only with 32-bit executable files.
