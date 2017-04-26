@@ -33,6 +33,11 @@ X-code is injected into a section with the largest number of zeros, using this m
 ```
 Expand the size of code section and inject x-code. This technique, like "code" one, is less suspicious, also you can inject much bigger x-code.
 
+```
+.\InfectPE.exe .\input.exe .\out.exe new
+```
+Create a new section and inject x-code into it, hardcoded name of the section is ".infect"
+
 In the patched file, ASLR and NX are disabled, for the more technical information you can analyze VS project.
 
 Please, don't use with packed or malformed executables.
@@ -44,3 +49,8 @@ Please, don't use with packed or malformed executables.
 
 ## TODO: 
 Add more techniques to inject x-code into PE file.
+
+## !!!
+I create this project for me to learn a little bit more about PE file format. 
+There are no advanced techniques. 
+Just only for educational purposes.
