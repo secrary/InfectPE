@@ -10,9 +10,9 @@ namespace PE
 		size_t size_ish{};
 		size_t size_sections{};
 		IMAGE_DOS_HEADER ids;
-		std::shared_ptr<char> MS_DOS_STUB;
+		std::vector<char> MS_DOS_STUB;
 		IMAGE_NT_HEADERS32 inh32;
-		std::shared_ptr<IMAGE_SECTION_HEADER> ish;
+		std::vector<IMAGE_SECTION_HEADER> ish;
 		std::vector<std::shared_ptr<char>> Sections;
 		void set_sizes(size_t, size_t, size_t, size_t, size_t);
 	};
@@ -23,4 +23,5 @@ namespace PE
 	void Inject_into_Largest_Tail(char* pe_file, size_t size_of_pe, char xcode[], size_t size_of_xcode, const std::string& out_path);
 	void Inject_into_code_tail(char* pe_file, size_t size_of_pe, char xcode[], size_t size_of_xcode, const std::string& out_path);
 	void Inject_Resize_Code(char* pe_file, size_t size_of_pe, char xcode[], size_t size_of_xcode, const std::string& out_path);
+	void Inject_New_Section(char* pe_file, size_t size_of_pe, char xcode[], size_t size_of_xcode, const std::string& out_path);
 }

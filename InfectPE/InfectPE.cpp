@@ -55,6 +55,8 @@ int main(int argc, char *argv[])
 		PE::Inject_into_code_tail(PE_file, size_of_pe, xcode, sizeof xcode, outfile); // less suspicious
 	else if (mode == "resize")
 		PE::Inject_Resize_Code(PE_file, size_of_pe, xcode, sizeof xcode, outfile);
+	else if (mode == "new")
+		PE::Inject_New_Section(PE_file, size_of_pe, xcode, sizeof xcode, outfile);
 	else
 	{
 		std::cout << "Incorrect mode\n";
