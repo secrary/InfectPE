@@ -13,7 +13,7 @@ namespace PE
 		std::shared_ptr<char> MS_DOS_STUB;
 		IMAGE_NT_HEADERS32 inh32;
 		std::shared_ptr<IMAGE_SECTION_HEADER> ish;
-		std::vector<std::pair<std::shared_ptr<char>, size_t>> Sections;
+		std::vector<std::shared_ptr<char>> Sections;
 		void set_sizes(size_t, size_t, size_t, size_t, size_t);
 	};
 

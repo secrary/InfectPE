@@ -77,7 +77,7 @@ namespace PE
 		{
 			shared_ptr<char> t_char(new char[pefile.ish.get()[i].SizeOfRawData]{}, std::default_delete<char[]>()); // Section
 			memcpy_s(t_char.get(), pefile.ish.get()[i].SizeOfRawData, PE + pefile.ish.get()[i].PointerToRawData, pefile.ish.get()[i].SizeOfRawData); // copy sections.
-			pefile.Sections.push_back(make_pair(t_char, pefile.ish.get()[i].SizeOfRawData));
+			pefile.Sections.push_back(t_char);
 		}
 		size_t sections_size{};
 		for (WORD i = 0; i < pefile.inh32.FileHeader.NumberOfSections; ++i)
@@ -109,7 +109,7 @@ namespace PE
 
 		for (auto i = 0; i < pefile.inh32.FileHeader.NumberOfSections; ++i)
 		{
-			memcpy_s(&r_ch[pefile.ish.get()[i].PointerToRawData], pefile.ish.get()[i].SizeOfRawData, pefile.Sections[i].first.get(), pefile.ish.get()[i].SizeOfRawData);
+			memcpy_s(&r_ch[pefile.ish.get()[i].PointerToRawData], pefile.ish.get()[i].SizeOfRawData, pefile.Sections[i].get(), pefile.ish.get()[i].SizeOfRawData);
 		}
 
 		ofstream ofile(file_name, ios::binary | ios::out);
@@ -162,7 +162,7 @@ namespace PE
 		for (size_t i = 0; i < good_sections_r_sz.size(); ++i)
 		{
 			auto size_zeros = Parsed_PE.ish.get()[good_sections_r_sz[i]].SizeOfRawData - Parsed_PE.ish.get()[good_sections_r_sz[i]].Misc.VirtualSize;
-			auto section = Parsed_PE.Sections[good_sections_r_sz[i]].first.get();
+			auto section = Parsed_PE.Sections[good_sections_r_sz[i]].get();
 
 			for (DWORD j = 0; j < size_zeros; ++j)
 			{
@@ -178,7 +178,7 @@ namespace PE
 		vector<tuple<WORD, size_t, size_t>> section_index_size_v_sz{}; // size of zeros and index of start point
 		for (auto &n : good_sections_v_sz)
 		{
-			auto section = Parsed_PE.Sections[n].first.get();
+			auto section = Parsed_PE.Sections[n].get();
 			auto section_size = Parsed_PE.ish.get()[n].SizeOfRawData;
 			tuple<WORD, size_t, size_t> section_index_size{};
 			for (DWORD i = 0; i < section_size; ++i)
@@ -265,7 +265,7 @@ namespace PE
 
 		auto inj_size = sizeof push + sizeof esp + sizeof hex_oep + size_of_xcode - 4;
 		if (inj_size < size_) {
-			auto inj_section = Parsed_PE.Sections[section_].first.get();
+			auto inj_section = Parsed_PE.Sections[section_].get();
 			memcpy(&inj_section[index_], xcode, size_of_xcode - 1);
 			memcpy(&inj_section[index_ + size_of_xcode - 1], push, sizeof push);
 			memcpy(&inj_section[index_ + size_of_xcode + sizeof push - 2], hex_oep, sizeof hex_oep);
@@ -330,7 +330,7 @@ namespace PE
 			is_valid = Parsed_PE.ish.get()[code_section].SizeOfRawData - Parsed_PE.ish.get()[code_section].Misc.VirtualSize < Parsed_PE.inh32.OptionalHeader.FileAlignment;
 
 			auto size_zeros = Parsed_PE.ish.get()[code_section].SizeOfRawData - Parsed_PE.ish.get()[code_section].Misc.VirtualSize;
-			auto section = Parsed_PE.Sections[code_section].first.get();
+			auto section = Parsed_PE.Sections[code_section].get();
 
 			for (DWORD j = 0; j < size_zeros; ++j)
 			{
@@ -348,7 +348,7 @@ namespace PE
 		{
 			// v_sz
 			tuple<WORD, size_t, size_t > section_index_size_v_sz{};
-			auto section = Parsed_PE.Sections[code_section].first.get();
+			auto section = Parsed_PE.Sections[code_section].get();
 			auto section_size = Parsed_PE.ish.get()[code_section].SizeOfRawData;
 			tuple<WORD, size_t, size_t> section_index_size{};
 			for (DWORD i = 0; i < section_size; ++i)
@@ -400,7 +400,7 @@ namespace PE
 
 		auto inj_size = sizeof push + sizeof esp + sizeof hex_oep + size_of_xcode - 4;
 		if (inj_size < size_) {
-			auto inj_section = Parsed_PE.Sections[section_].first.get();
+			auto inj_section = Parsed_PE.Sections[section_].get();
 			memcpy(&inj_section[index_], xcode, size_of_xcode - 1);
 			memcpy(&inj_section[index_ + size_of_xcode - 1], push, sizeof push);
 			memcpy(&inj_section[index_ + size_of_xcode + sizeof push - 2], hex_oep, sizeof hex_oep);
@@ -490,7 +490,7 @@ namespace PE
 
 		auto size_of_code_section = Parsed_PE.ish.get()[section_].SizeOfRawData;
 		shared_ptr<char> n_section(new char[size_of_code_section + aligned_size_of_xcode]{}, std::default_delete<char[]>());
-		memcpy(n_section.get(), Parsed_PE.Sections[section_].first.get(), size_of_code_section);
+		memcpy(n_section.get(), Parsed_PE.Sections[section_].get(), size_of_code_section);
 
 
 		auto inj_section = n_section.get();
@@ -499,7 +499,7 @@ namespace PE
 		memcpy(&inj_section[index_ + size_of_xcode + sizeof push - 2], hex_oep, sizeof hex_oep);
 		memcpy(&inj_section[index_ + sizeof hex_oep + sizeof push + size_of_xcode - 2], esp, sizeof esp);
 
-		Parsed_PE.Sections[section_].first = n_section;
+		Parsed_PE.Sections[section_] = n_section;
 
 		// disable ASLR
 		Parsed_PE.inh32.OptionalHeader.DllCharacteristics ^= IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE;
